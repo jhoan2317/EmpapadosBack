@@ -139,12 +139,12 @@ class LogoutAPIView(APIView):
                 logger.warning(f"No se pudo invalidar el token durante logout: {str(e)}")
 
         # Borrar cookies desde el backend (esto funciona para cookies HttpOnly)
-        response.delete_cookie(key="access_token", path="/", samesite="Lax")
-        response.delete_cookie(key="refresh_token", path="/", samesite="Lax")
+        response.delete_cookie(key="access_token", path="/", samesite="None", secure=True)
+        response.delete_cookie(key="refresh_token", path="/", samesite="None", secure=True)
         
         # Opcional: borrar otras variantes de nombres por si acaso
-        response.delete_cookie(key="accessToken", path="/", samesite="Lax")
-        response.delete_cookie(key="refreshToken", path="/", samesite="Lax")
+        response.delete_cookie(key="accessToken", path="/", samesite="None", secure=True)
+        response.delete_cookie(key="refreshToken", path="/", samesite="None", secure=True)
 
         return response
 
