@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from dotenv import load_dotenv
 from pathlib import Path
+import dj_database_url
 import os
 
 
@@ -127,6 +128,11 @@ DATABASE_APPS_MAPPING =
 }
 '''
 
+DATABASES = {
+    "default": dj_database_url.config(
+        default=os.getenv("DATABASE_URL")
+    )
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -172,6 +178,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://empapados-front-8cws.vercel.app"
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://empapados-front-8cws.vercel.app"
+]
+
+
 
 # Configuración de CORS
 CORS_ALLOWED_ORIGINS = [
