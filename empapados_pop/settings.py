@@ -180,17 +180,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "https://empapados-front.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
 ]
-
 
 CSRF_TRUSTED_ORIGINS = [
     "https://empapados-front.vercel.app",
-]
-
-
-
-# Configuración de CORS
-CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:3000",
