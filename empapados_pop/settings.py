@@ -179,11 +179,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "https://empapados-front-8cws.vercel.app"
+    "https://empapados-front.vercel.app",
 ]
 
+
 CSRF_TRUSTED_ORIGINS = [
-    "https://empapados-front-8cws.vercel.app"
+    "https://empapados-front.vercel.app",
 ]
 
 
