@@ -34,8 +34,8 @@ class CustomTokenRefreshView(TokenRefreshView):
                 key="access_token",
                 value=access_token,
                 httponly=True,
-                secure=False,
-                samesite="Lax",
+                secure=True,
+                samesite="None",
                 path="/",
                 max_age=60 * 60 * 24
             )
@@ -90,8 +90,8 @@ class AdminLoginView(APIView):
                 key="access_token",
                 value=tokens["access"],
                 httponly=True,
-                secure=False,
-                samesite="Lax",
+                secure=True,
+                samesite="None",
                 path="/",
                 max_age=60 * 60 * 24
             )
@@ -100,8 +100,8 @@ class AdminLoginView(APIView):
                 key="refresh_token",
                 value=tokens["refresh"],
                 httponly=True,
-                secure=False,
-                samesite="Lax",
+                secure=True,
+                samesite="None",
                 path="/",
                 max_age=60 * 60 * 24 * 7
             )
