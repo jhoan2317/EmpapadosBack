@@ -187,6 +187,7 @@ CORS_ALLOWED_ORIGINS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "https://empapados-front.vercel.app",
+    "https://empapadosback.onrender.com",
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:3000",

@@ -10,8 +10,14 @@ class Command(BaseCommand):
         email = os.getenv('DJANGO_SUPERUSER_EMAIL', 'admin@example.com')
         password = os.getenv('DJANGO_SUPERUSER_PASSWORD', 'admin123')
 
-        if not User.objects.filter(username=username).exists():
-            User.objects.create_superuser(username, email, password)
+        user, created = User.objects.get_or_create(username=username, defaults={'email': email})
+        
+        user.set_password(password)
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+
+        if created:
             self.stdout.write(self.style.SUCCESS(f'Superusuario "{username}" creado correctamente'))
         else:
-            self.stdout.write(self.style.SUCCESS(f'El superusuario "{username}" ya existe'))
+            self.stdout.write(self.style.SUCCESS(f'Contraseña actualizada para el superusuario "{username}"'))
