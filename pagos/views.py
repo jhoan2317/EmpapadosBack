@@ -49,7 +49,7 @@ def reporte_hoy(request):
         # Día específico seleccionado
         ingresos = (
             Pedido.objects
-            .filter(fecha__date=hoy)
+            .filter(fecha__date=hoy, estado='pagado')
             .aggregate(total=Sum("total"))["total"] or 0
         )
         gastos = (
@@ -61,7 +61,7 @@ def reporte_hoy(request):
         # Ver Todo → acumula el mes completo
         ingresos = (
             Pedido.objects
-            .filter(fecha__year=hoy.year, fecha__month=hoy.month)
+            .filter(fecha__year=hoy.year, fecha__month=hoy.month, estado='pagado')
             .aggregate(total=Sum("total"))["total"] or 0
         )
         gastos = (

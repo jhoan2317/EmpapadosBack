@@ -4,11 +4,12 @@ from productos.models import Producto
 
 class DetallePedidoSerializer(serializers.ModelSerializer):
     producto_nombre = serializers.CharField(source='producto.nombre', read_only=True)
+    precio_unitario = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
     
     class Meta:
         model = DetallePedido
         fields = ['producto', 'producto_nombre', 'cantidad', 'precio_unitario', 'subtotal']
-        read_only_fields = ['precio_unitario', 'subtotal']
+        read_only_fields = ['subtotal']
 
 class PedidoSerializer(serializers.ModelSerializer):
     detalles = DetallePedidoSerializer(many=True)
@@ -55,7 +56,7 @@ class PedidoSerializer(serializers.ModelSerializer):
         for item in detalles_data:
             producto = item['producto']
             cantidad = item['cantidad']
-            precio = producto.precio
+            precio = item.get('precio_unitario', producto.precio)
 
             subtotal = precio * cantidad
             total += subtotal

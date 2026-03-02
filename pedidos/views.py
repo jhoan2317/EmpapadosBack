@@ -22,11 +22,14 @@ class PedidoViewSet(viewsets.ModelViewSet):
         queryset = Pedido.objects.all().order_by('-id')
         fecha = self.request.query_params.get('fecha', None)
         tipo = self.request.query_params.get('tipo', None)
+        estado = self.request.query_params.get('estado', None)
         
         if fecha:
             queryset = queryset.filter(fecha__date=fecha)
         if tipo and tipo != 'todas':
             queryset = queryset.filter(tipo_pedido=tipo)
+        if estado:
+            queryset = queryset.filter(estado=estado)
             
         return queryset
     

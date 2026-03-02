@@ -71,7 +71,8 @@ class DetallePedido(models.Model):
             raise ValidationError("La cantidad debe ser mayor que cero.")
 
     def save(self, *args, **kwargs):
-        self.precio_unitario = self.producto.precio
+        if not self.precio_unitario:
+            self.precio_unitario = self.producto.precio
         self.subtotal = self.cantidad * self.precio_unitario
 
         super().save(*args, **kwargs)
