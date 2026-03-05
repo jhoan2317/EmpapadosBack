@@ -69,5 +69,5 @@ class GlobalConfigViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        # Aseguramos que solo haya una configuración o devolvemos la última
-        return GlobalConfig.objects.all()[:1]
+        # Aseguramos que siempre devolvemos la configuración más reciente
+        return GlobalConfig.objects.all().order_by('-id')[:1]
