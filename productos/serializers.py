@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Categoria, Producto, Tamano, ProductoTamano
+from .models import Categoria, Producto, Tamano, ProductoTamano, Receta
 
 
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -11,6 +11,14 @@ class TamanoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tamano
         fields = '__all__'
+
+class RecetaSerializer(serializers.ModelSerializer):
+    ingrediente_nombre = serializers.CharField(source='ingrediente.nombre_ingrediente', read_only=True)
+    unidad_medida = serializers.CharField(source='ingrediente.unidad_medida', read_only=True)
+
+    class Meta:
+        model = Receta
+        fields = ['id', 'producto', 'ingrediente', 'ingrediente_nombre', 'cantidad', 'unidad_medida']
 
 class ProductoSerializer(serializers.ModelSerializer):
     # Permitimos que 'imagen' reciba un string con la URL de Cloudinary
@@ -31,8 +39,11 @@ class ProductoSerializer(serializers.ModelSerializer):
             'categoria_nombre',
             'precio',
             'es_combo',
-            'activo'
+            'activo',
+            'receta'
         ]
+    
+    receta = RecetaSerializer(many=True, read_only=True)
 
     def get_imagen_url(self, obj):
         request = self.context.get('request')

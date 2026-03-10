@@ -1,11 +1,12 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from .models import Categoria, Producto, Tamano, ProductoTamano
+from .models import Categoria, Producto, Tamano, ProductoTamano, Receta
 from .serializers import (
     CategoriaSerializer, 
     ProductoSerializer, 
     TamanoSerializer, 
-    ProductoTamanoSerializer
+    ProductoTamanoSerializer,
+    RecetaSerializer
 )
 from rest_framework.renderers import JSONRenderer
 from django.http import JsonResponse
@@ -47,4 +48,9 @@ class TamanoViewSet(viewsets.ModelViewSet):
 class ProductoTamanoViewSet(viewsets.ModelViewSet):
     queryset = ProductoTamano.objects.all()
     serializer_class = ProductoTamanoSerializer
-    permission_classes = [IsAuthenticated]            
+    permission_classes = [IsAuthenticated]
+
+class RecetaViewSet(viewsets.ModelViewSet):
+    queryset = Receta.objects.all()
+    serializer_class = RecetaSerializer
+    permission_classes = [IsAuthenticated]

@@ -2,9 +2,11 @@ from rest_framework import serializers
 from .models import Ingrediente, MovimientoInventario
 
 class IngredienteSerializer(serializers.ModelSerializer):
+    categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
+
     class Meta:
         model = Ingrediente
-        fields = ['id', 'nombre_ingrediente', 'stock', 'stock_minimo', 'unidad_medida']
+        fields = ['id', 'nombre_ingrediente', 'categoria', 'categoria_nombre', 'stock', 'stock_minimo', 'unidad_medida']
 
 class MovimientoInventarioSerializer(serializers.ModelSerializer):
     nombre_ingrediente = serializers.SerializerMethodField()

@@ -2,7 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
-from productos.models import Producto
+from productos.models import Producto, ComboDetalle, Receta
+from inventario.models import Ingrediente, MovimientoInventario
 
 
 class Pedido(models.Model):
@@ -75,11 +76,47 @@ class DetallePedido(models.Model):
             self.precio_unitario = self.producto.precio
         self.subtotal = self.cantidad * self.precio_unitario
 
+        is_new = self.pk is None
         super().save(*args, **kwargs)
 
+        if is_new:
+            self.descontar_inventario()
+
+        # Actualizar el total del pedido
         total = sum(d.subtotal for d in self.pedido.detalles.all())
         self.pedido.total = total
         self.pedido.save()
+
+    def descontar_inventario(self):
+        """
+        Lógica para mermar el inventario basado en la receta del producto.
+        """
+        # Si es un combo, descontamos los ingredientes de cada producto incluido
+        if self.producto.es_combo:
+            combos = ComboDetalle.objects.filter(combo=self.producto)
+            for item in combos:
+                self._procesar_producto_receta(item.producto_incluido, item.cantidad * self.cantidad)
+        else:
+            self._procesar_producto_receta(self.producto, self.cantidad)
+
+    def _procesar_producto_receta(self, producto, cantidad_pedida):
+        recetas = Receta.objects.filter(producto=producto)
+        for r in recetas:
+            cantidad_a_descontar = r.cantidad * cantidad_pedida
+            ingrediente = r.ingrediente
+            
+            # Actualizar stock
+            ingrediente.stock -= cantidad_a_descontar
+            ingrediente.save()
+
+            # Registrar movimiento
+            MovimientoInventario.objects.create(
+                ingrediente=ingrediente,
+                tipo_movimiento='SALIDA',
+                cantidad=cantidad_a_descontar,
+                motivo=f"Venta Automática - Pedido #{self.pedido.id}",
+                usuario="Sistema"
+            )
 
     def __str__(self):
         return f"{self.producto.nombre} x {self.cantidad}"

@@ -41,5 +41,13 @@ class ComboDetalle(models.Model):
     cantidad = models.IntegerField(default=1)
 
     def __str__(self):
-        return f"{self.combo.nombre} incluye {self.producto_incluido.nombre}"    
+        return f"{self.combo.nombre} incluye {self.producto_incluido.nombre}"
+
+class Receta(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='receta')
+    ingrediente = models.ForeignKey('inventario.Ingrediente', on_delete=models.CASCADE, related_name='productos_recetas')
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2, help_text="Cantidad del ingrediente que se usa por cada unidad de producto")
+
+    def __str__(self):
+        return f"{self.producto.nombre} usa {self.cantidad} de {self.ingrediente.nombre_ingrediente}"
     

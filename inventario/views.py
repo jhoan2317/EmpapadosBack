@@ -24,6 +24,11 @@ class IngredienteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = SmallResultSetPagination
 
+    def paginate_queryset(self, queryset):
+        if self.request.query_params.get('no_pagination') == 'true':
+            return None
+        return super().paginate_queryset(queryset)
+
     @action(detail=False, methods=['post'])
     def registrar_salida(self, request):
         """

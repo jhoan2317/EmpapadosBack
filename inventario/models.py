@@ -10,6 +10,7 @@ class Ingrediente(models.Model):
     ]
 
     nombre_ingrediente = models.CharField(max_length=150, unique=True)
+    categoria = models.ForeignKey('productos.Categoria', on_delete=models.SET_NULL, null=True, blank=True, related_name='ingredientes', verbose_name="Categoría de Producto")
     stock = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, default=5.00)
     unidad_medida = models.CharField(max_length=20, choices=UNIDADES, default='unidades')
