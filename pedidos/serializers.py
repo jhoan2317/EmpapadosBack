@@ -75,8 +75,40 @@ class PedidoSerializer(serializers.ModelSerializer):
 
 # SERIALIZER DEL ADMIN 
 class PedidoAdminSerializer(serializers.ModelSerializer):
-    detalles = DetallePedidoSerializer(many=True, read_only=True)
+    detalles = DetallePedidoSerializer(many=True, required=False)
 
     class Meta:
         model = Pedido
         fields = '__all__'
+
+    def update(self, instance, validated_data):
+        detalles_data = validated_data.pop('detalles', None)
+        
+        # Actualizar campos regulares del pedido
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+            
+        # Si se envían nuevos detalles, reemplazamos los anteriores
+        if detalles_data is not None:
+            instance.detalles.all().delete()
+            total = 0
+            
+            for item in detalles_data:
+                producto = item['producto']
+                cantidad = item['cantidad']
+                precio = item.get('precio_unitario', producto.precio)
+
+                subtotal = precio * cantidad
+                total += subtotal
+
+                DetallePedido.objects.create(
+                    pedido=instance,
+                    producto=producto,
+                    cantidad=cantidad,
+                    precio_unitario=precio,
+                    subtotal=subtotal
+                )
+            instance.total = total
+            
+        instance.save()
+        return instance

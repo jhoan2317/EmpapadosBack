@@ -72,3 +72,79 @@ class IngredienteViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Ingrediente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def resumen_movimientos(self, request):
+        from django.db.models import Sum
+        ingredientes = Ingrediente.objects.all()
+        resumen = []
+        for ing in ingredientes:
+            salidas = ing.movimientos.filter(tipo_movimiento='SALIDA').aggregate(Sum('cantidad'))['cantidad__sum'] or 0
+            # El total con el que ingresó = stock actual + salidas
+            total_ingreso = float(ing.stock) + float(salidas)
+            
+            resumen.append({
+                'id': ing.id,
+                'nombre': ing.nombre_ingrediente,
+                'total_ingreso': total_ingreso,
+                'total_salida': float(salidas),
+                'unidad': ing.unidad_medida,
+                'stock_actual': float(ing.stock)
+            })
+        return Response(resumen)
+
+    @action(detail=False, methods=['post'])
+    def registrar_degustacion(self, request):
+        """
+        Registra una degustación, descontando todos los ingredientes según la receta del producto consumido.
+        Body: {producto_id, cantidad, descripcion}
+        """
+        from productos.models import Producto, Receta
+        producto_id = request.data.get('producto_id')
+        cantidad = request.data.get('cantidad', 1)
+        descripcion = request.data.get('descripcion', 'Degustación empleado')
+        usuario = request.user.username if request.user.is_authenticated else "Anonimo"
+
+        if not producto_id:
+            return Response({'error': 'Falta el id del producto consumido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            producto = Producto.objects.get(id=producto_id)
+            cantidad = float(cantidad)
+
+            if cantidad <= 0:
+                return Response({'error': 'La cantidad debe ser mayor a 0'}, status=status.HTTP_400_BAD_REQUEST)
+
+            recetas = Receta.objects.filter(producto=producto)
+            if not recetas.exists():
+                return Response({'error': 'El producto no tiene receta definida. No se puede descontar ingredientes de forma automática.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validar que haya stock para todos los ingredientes primero
+            for receta in recetas:
+                cantidad_requerida = float(receta.cantidad) * cantidad
+                if receta.ingrediente.stock < cantidad_requerida:
+                    return Response({'error': f'Stock insuficiente para: {receta.ingrediente.nombre_ingrediente}'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Ejecutar el descuento
+            for receta in recetas:
+                ingrediente = receta.ingrediente
+                cantidad_requerida = float(receta.cantidad) * cantidad
+                
+                ingrediente.stock = float(ingrediente.stock) - cantidad_requerida
+                ingrediente.save()
+
+                # Guardar movimiento individual
+                MovimientoInventario.objects.create(
+                    ingrediente=ingrediente,
+                    tipo_movimiento='SALIDA',
+                    cantidad=cantidad_requerida,
+                    motivo=f"DEGUSTACIÓN ({cantidad}x {producto.nombre}): {descripcion}",
+                    usuario=usuario
+                )
+
+            return Response({'message': f'Degustación registrada. Se descontaron {recetas.count()} ingredientes del inventario automáticamente.'}, status=status.HTTP_200_OK)
+
+        except Producto.DoesNotExist:
+            return Response({'error': 'Producto no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
