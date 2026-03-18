@@ -98,11 +98,66 @@ class DetallePedido(models.Model):
                 self._procesar_producto_receta(item.producto_incluido, item.cantidad * self.cantidad)
         else:
             self._procesar_producto_receta(self.producto, self.cantidad)
+        
+        # Procesar adiciones (Nuevos ingredientes extras)
+        additions_list = getattr(self, '_additions_temp', [])
+        if additions_list and isinstance(additions_list, list):
+            for ing_id in additions_list:
+                try:
+                    ingrediente = Ingrediente.objects.get(id=int(ing_id))
+                    # Las adiciones descuentan 1 unidad base * cantidad del item pedido
+                    cantidad_a_descontar = 1 * self.cantidad 
+                    
+                    ingrediente.stock -= cantidad_a_descontar
+                    ingrediente.save()
+
+                    MovimientoInventario.objects.create(
+                        ingrediente=ingrediente,
+                        tipo_movimiento='SALIDA',
+                        cantidad=cantidad_a_descontar,
+                        motivo=f"Adición Pagada - Pedido #{self.pedido.id}",
+                        usuario="Sistema"
+                    )
+                except (Ingrediente.DoesNotExist, ValueError):
+                    pass
 
     def _procesar_producto_receta(self, producto, cantidad_pedida):
         recetas = Receta.objects.filter(producto=producto)
+        swaps_dict = getattr(self, '_swaps_temp', {})
+        if not isinstance(swaps_dict, dict):
+            swaps_dict = {}
+
         for r in recetas:
             cantidad_a_descontar = r.cantidad * cantidad_pedida
+            
+            # Verificamos si este ingrediente de la receta original tiene un swap activo
+            # Aseguramos que las keys sean strings para la comparación
+            ingrediente_id_str = str(r.ingrediente.id)
+            swaps_str_keys = {str(k): v for k, v in swaps_dict.items()}
+
+            if ingrediente_id_str in swaps_str_keys:
+                nuevo_ingrediente_id = swaps_str_keys[ingrediente_id_str]
+                if nuevo_ingrediente_id:
+                    # Traemos el nuevo ingrediente seleccionado
+                    try:
+                        ingrediente = Ingrediente.objects.get(id=int(nuevo_ingrediente_id))
+                        # Actualizar stock del NUEVO ingrediente
+                        ingrediente.stock -= cantidad_a_descontar
+                        ingrediente.save()
+
+                        # Registrar movimiento reflejando el cambio
+                        MovimientoInventario.objects.create(
+                            ingrediente=ingrediente,
+                            tipo_movimiento='SALIDA',
+                            cantidad=cantidad_a_descontar,
+                            motivo=f"Cambio (por {r.ingrediente.nombre_ingrediente}) - Pedido #{self.pedido.id}",
+                            usuario="Sistema"
+                        )
+                        continue # Ya procesamos este elemento de la receta, pasamos al siguiente
+                    except Ingrediente.DoesNotExist:
+                        pass # Si falla, caemos al ingrediente original
+
+            # FLUJO NORMAL (Sin Swap)
             ingrediente = r.ingrediente
             
             # Actualizar stock

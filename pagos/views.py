@@ -52,6 +52,16 @@ def reporte_hoy(request):
             .filter(fecha__date=hoy, estado='pagado')
             .aggregate(total=Sum("total"))["total"] or 0
         )
+        ingresos_efectivo = (
+            Pedido.objects
+            .filter(fecha__date=hoy, estado='pagado', metodo_pago='efectivo')
+            .aggregate(total=Sum("total"))["total"] or 0
+        )
+        ingresos_nequi = (
+            Pedido.objects
+            .filter(fecha__date=hoy, estado='pagado', metodo_pago='nequi')
+            .aggregate(total=Sum("total"))["total"] or 0
+        )
         gastos = (
             Gasto.objects
             .filter(fecha=hoy)
@@ -64,6 +74,16 @@ def reporte_hoy(request):
             .filter(fecha__year=hoy.year, fecha__month=hoy.month, estado='pagado')
             .aggregate(total=Sum("total"))["total"] or 0
         )
+        ingresos_efectivo = (
+            Pedido.objects
+            .filter(fecha__year=hoy.year, fecha__month=hoy.month, estado='pagado', metodo_pago='efectivo')
+            .aggregate(total=Sum("total"))["total"] or 0
+        )
+        ingresos_nequi = (
+            Pedido.objects
+            .filter(fecha__year=hoy.year, fecha__month=hoy.month, estado='pagado', metodo_pago='nequi')
+            .aggregate(total=Sum("total"))["total"] or 0
+        )
         gastos = (
             Gasto.objects
             .filter(fecha__year=hoy.year, fecha__month=hoy.month)
@@ -74,6 +94,8 @@ def reporte_hoy(request):
 
     return Response({
         "ingresos": ingresos,
+        "ingresos_efectivo": ingresos_efectivo,
+        "ingresos_nequi": ingresos_nequi,
         "gastos": gastos,
         "ganancia": ganancia
     })

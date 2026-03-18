@@ -5,10 +5,12 @@ from productos.models import Producto
 class DetallePedidoSerializer(serializers.ModelSerializer):
     producto_nombre = serializers.CharField(source='producto.nombre', read_only=True)
     precio_unitario = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    swaps = serializers.DictField(child=serializers.IntegerField(), required=False, write_only=True)
+    additions_data = serializers.ListField(child=serializers.IntegerField(), required=False, write_only=True)
     
     class Meta:
         model = DetallePedido
-        fields = ['producto', 'producto_nombre', 'cantidad', 'precio_unitario', 'subtotal']
+        fields = ['producto', 'producto_nombre', 'cantidad', 'precio_unitario', 'subtotal', 'swaps', 'additions_data']
         read_only_fields = ['subtotal']
 
 class PedidoSerializer(serializers.ModelSerializer):
@@ -57,17 +59,24 @@ class PedidoSerializer(serializers.ModelSerializer):
             producto = item['producto']
             cantidad = item['cantidad']
             precio = item.get('precio_unitario', producto.precio)
+            swaps = item.get('swaps', {})
+            additions = item.get('additions_data', [])
 
             subtotal = precio * cantidad
             total += subtotal
 
-            DetallePedido.objects.create(
+            detalle = DetallePedido(
                 pedido=pedido,
                 producto=producto,
                 cantidad=cantidad,
                 precio_unitario=precio,
                 subtotal=subtotal
             )
+            
+            # Guardamos la info temporalmente en la instancia para usarla luego en el save del modelo
+            setattr(detalle, '_swaps_temp', swaps)
+            setattr(detalle, '_additions_temp', additions)
+            detalle.save()
 
         pedido.total = total
         pedido.save()
@@ -97,17 +106,23 @@ class PedidoAdminSerializer(serializers.ModelSerializer):
                 producto = item['producto']
                 cantidad = item['cantidad']
                 precio = item.get('precio_unitario', producto.precio)
+                swaps = item.get('swaps', {})
+                additions = item.get('additions_data', [])
 
                 subtotal = precio * cantidad
                 total += subtotal
 
-                DetallePedido.objects.create(
+                detalle = DetallePedido(
                     pedido=instance,
                     producto=producto,
                     cantidad=cantidad,
                     precio_unitario=precio,
                     subtotal=subtotal
                 )
+                setattr(detalle, '_swaps_temp', swaps)
+                setattr(detalle, '_additions_temp', additions)
+                detalle.save()
+                
             instance.total = total
             
         instance.save()
